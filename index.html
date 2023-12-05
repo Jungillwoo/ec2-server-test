@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <form id="search-form">
+      <input type="text" id="address-input" placeholder="주소를 입력하세요" />
+      <button type="submit">검색</button>
+    </form>
+    <div id="map" style="width:750px;height:350px;"></div>
+    <script
+      type="text/javascript"
+      src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=5c189a02814555dc1e1dc1378c43745b&libraries=clusterer"
+    ></script>
+    <script>
+      const url =
+        "https://api.odcloud.kr/api/EvInfoServiceV2/v1/getEvSearchList?page=1&perPage=3106&serviceKey=DX7Ku0Wanoi%2B3C0RoK%2FSlFaXAtlmK0lsHDcdm81X6fd3%2F6K7NCUhOZfW2tY1ldPu1CHFq%2BHQYqekPPtersVubQ%3D%3D";
+
+      // 인포윈도우를 표시하는 클로저를 만드는 함수입니다
+      function makeOverListener(map, marker, infowindow) {
+        return function () {
+          infowindow.open(map, marker);
+        };
+      }
+
+      // 인포윈도우를 닫는 클로저를 만드는 함수입니다
+      function makeOutListener(infowindow) {
+        return function () {
+          infowindow.close();
+        };
+      }
+      
+      var mapContainer = document.getElementById("map"), // 지도를 표시할 div
+        mapOption = {
+          center: new kakao.maps.LatLng(37.60504, 127.05591), // 지도의 중심좌표
+          level: 3, // 지도의 확대 레벨
+        };
+
+      var map = new kakao.maps.Map(mapContainer, mapOption);
+        
+      var addressInput = document.getElementById("address-input");
+    
+      var clusterer = new kakao.maps.MarkerClusterer({
+        map: map, // 마커들을 클러스터로 관리하고 표시할 지도 객체
+        averageCenter: true, // 클러스터에 포함된 마커들의 평균 위치를 클러스터 마커 위치로 설정
+        minLevel: 5, // 클러스터 할 최소 지도 레벨
+      });
+
+      fetch(url)
+        .then((res) => res.json())
+        .then((myJson) => {
+          var markers = [];
+          const stores = myJson.data;
+          console.log(JSON.stringify(myJson, null, 1));
+
+          console.log(stores);
+
+          for (var i = 0; i < stores.length; i++) {
+            var marker = new kakao.maps.Marker({
+              position: new kakao.maps.LatLng(stores[i]["lat"], stores[i]["longi"]),
+              map: map,
+            });
+
+            var csNm = stores[i]["csNm"] //충전소명칭
+            var chargeTp = stores[i]["chargeTp"] //충전기타입
+            var cpStat = stores[i]["cpStat"] //충전기상태
+            var cpTp = stores[i]["cpTp"] //충전방식
+
+            if (cpStat=1){
+              cpStat='충전가능';
+            } else if (cpStat=2){
+              cpStat='충전중'
+            } else if (cpStat=3){
+              cpStat='고장/점검'
+            } else if (cpStat=4) {
+              cpStat='통신장애'
+            } else if (cpStat=5) {
+              cpStat='통신미연결'
+            } 
+
+            if (chargeTp=1){
+              chargeTp='완속'
+            } else if (chargeTp=2) {
+              chargeTp='급속'
+            }
+
+            if (cpTp=1) {
+              cpTp='B타입(5핀)'
+            } else if (cpTp=2) {
+              cpTp="C타입(5핀)"
+            } else if (cpTp=3) {
+              cpTp="BC타입(5핀)"
+            } else if (cpTp=4) {
+              cpTp="BC타입(7핀)"
+            } else if (cpTp=5) {
+              cpTp="DC차데모"
+            } else if (cpTp=6) {
+              cpTp="AC3상"
+            } else if (cptp=7) {
+              cpTp="DC콤보"
+            } else if (cpTp=8) {
+              cpTp="DC차데모+DC콤보"
+            }
+
+            var iwContent = '<div style=width:100%;padding:5px;> 충전소명칭:'+csNm+
+                            '<br>충전기상태:'+cpStat+
+                            '<br>충전기타입:'+chargeTp+
+                            '<br>충전방식:'+cpTp,
+                iwPosition = new kakao.maps.LatLng(stores[i]["lat"], stores[i]["longi"]);
+
+            var infowindow = new kakao.maps.InfoWindow({
+              position: iwPosition, 
+              content: iwContent
+            });
+
+            markers.push(marker);
+
+            kakao.maps.event.addListener(marker, "mouseover", makeOverListener(map, marker, infowindow));
+            kakao.maps.event.addListener(marker, "mouseout", makeOutListener(infowindow));
+          }
+
+          clusterer.addMarkers(markers);
+        });
+            
+    </script>
+  </body>
+</html>
