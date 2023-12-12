@@ -4,18 +4,14 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <style>p.indent{ padding: 1.8em }</style>
-    <title>Document</title>
+    <style>p.indent{ padding: 0.5em }</style>
+    <title>전기차충전소로드맵</title>
   </head>
   <body>
-    <form id="search-form">
-      <input type="text" id="address-input" placeholder="주소를 입력하세요" />
-      <button type="submit">검색</button>
-    </form>
-
+    <h1 align="center">전기차 충전소 로드맵</h1>
     <br>
 
-    <div id="map" style="width:750px;height:350px;"></div>
+    <div id="map" style="width:100%;height: 700px;;"></div>
     <script
       type="text/javascript"
       src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=5c189a02814555dc1e1dc1378c43745b&libraries=clusterer"
@@ -44,17 +40,54 @@
           level: 8, // 지도의 확대 레벨
         };
 
-      var map = new kakao.maps.Map(mapContainer, mapOption);
+      var map = new kakao.maps.Map(mapContainer, mapOption); //카카오맵 생성
+
+      var markerImageUrl = 'http://drive.google.com/uc?id=19IKSRq_Xd6t19m13lFxn2sKQPlZJ1mzT', //충전가능마커이미지주소
+		    markerImageSize = new kakao.maps.Size(60, 64), // 마커 이미지의 크기
+		    markerImageOptions = { 
+		        offset : new kakao.maps.Point(42, 27)// 마커 좌표에 일치시킬 이미지 안의 좌표
+		    };
+
+
+        var markerImageUrl2 = 'http://drive.google.com/uc?id=1gyKjYjXjS_DtVgHRIGsvZM1xhYf-mT0-', //충전불가마커이미지주소
+		    markerImageSize2 = new kakao.maps.Size(40, 42), // 마커 이미지의 크기
+		    markerImageOptions2 = { 
+		        offset : new kakao.maps.Point(42, 27)// 마커 좌표에 일치시킬 이미지 안의 좌표
+		    };
+
+		// 충전가능 마커 이미지를 생성한다
+		var markerImage = new kakao.maps.MarkerImage(markerImageUrl, markerImageSize, markerImageOptions);
+		// 충전불가 마커 이미지를 생성한다
+		var markerImage2 = new kakao.maps.MarkerImage(markerImageUrl2, markerImageSize2, markerImageOptions2);
+
+
+      /*    
+      //지도검색기능
+      var ps = new kakao.maps.services.Places();
+
+      ps.keywordSearch('이태원 맛집', placeSearchCB);
+
+      function placeSearchCB (data, status, pagination) {
+        if (status === kakao.maps.services.Status.OK) {
+          var bounds = new kakao.maps.LatLngBounds();
+
+          for (var i=0; i<data.length; i++) {
+            displayMarker(data[i]);
+            bounds.extend(new kakao.maps.LatLng(data[i].y, data[i].x))
+          }
+        }
+      }
+      */
         
-      var addressInput = document.getElementById("address-input");
     
       var clusterer = new kakao.maps.MarkerClusterer({
         map: map, // 마커들을 클러스터로 관리하고 표시할 지도 객체
         averageCenter: true, // 클러스터에 포함된 마커들의 평균 위치를 클러스터 마커 위치로 설정
         minLevel: 5, // 클러스터 할 최소 지도 레벨
       });
-
-      fetch(url)
+      
+    
+      fetch(url) //api주소 불러와서 json 파일로 저장 및 로그 출력
         .then((res) => res.json())
         .then((myJson) => {
           var markers = [];
@@ -63,10 +96,29 @@
 
           console.log(stores);
 
+
+          /*
+          if (cpStat=1){
+            for (var i = 0; i < stores.length; i++) {
+              if (cpStat=1) {
+            var marker = new kakao.maps.Marker({
+              position: new kakao.maps.LatLng(stores[i]["lat"], stores[i]["longi"]),
+              image: markerImage
+            });
+          } else {
+            var marker = new kakao.maps.Marker({
+              position: new kakao.maps.LatLng(stores[i]["lat"], stores[i]["longi"]),
+              image: markerImage2
+          })};
+          */
+        
+          //충전가능하다면 ~ ~
+          if (cpStat=1) {
           for (var i = 0; i < stores.length; i++) {
             var marker = new kakao.maps.Marker({
               position: new kakao.maps.LatLng(stores[i]["lat"], stores[i]["longi"]),
-              map: map,
+              image :markerImage,
+              map :map,
             });
 
             var addr = stores[i]["addr"] //충전소주소
@@ -74,6 +126,8 @@
             var chargeTp = stores[i]["chargeTp"] //충전기타입
             var cpStat = stores[i]["cpStat"] //충전기상태
             var cpTp = stores[i]["cpTp"] //충전방식
+
+            
 
             if (cpStat=1){
               cpStat='충전가능';
@@ -130,7 +184,79 @@
           }
 
           clusterer.addMarkers(markers);
-        });
+        }else { //충전 불가 하다면 ~ ~
+          for (var i = 0; i < stores.length; i++) {
+            var marker = new kakao.maps.Marker({
+              position: new kakao.maps.LatLng(stores[i]["lat"], stores[i]["longi"]),
+              image :markerImage2,
+              map :map,
+            });
+
+            var addr = stores[i]["addr"] //충전소주소
+            var csNm = stores[i]["csNm"] //충전소명칭
+            var chargeTp = stores[i]["chargeTp"] //충전기타입
+            var cpStat = stores[i]["cpStat"] //충전기상태
+            var cpTp = stores[i]["cpTp"] //충전방식
+
+            
+
+            if (cpStat=1){
+              cpStat='충전가능';
+            } else if (cpStat=2){
+              cpStat='충전중'
+            } else if (cpStat=3){
+              cpStat='고장/점검'
+            } else if (cpStat=4) {
+              cpStat='통신장애'
+            } else if (cpStat=5) {
+              cpStat='통신미연결'
+            } 
+
+            if (chargeTp=1){
+              chargeTp='완속'
+            } else if (chargeTp=2) {
+              chargeTp='급속'
+            }
+
+            if (cpTp=1) {
+              cpTp='B타입(5핀)'
+            } else if (cpTp=2) {
+              cpTp="C타입(5핀)"
+            } else if (cpTp=3) {
+              cpTp="BC타입(5핀)"
+            } else if (cpTp=4) {
+              cpTp="BC타입(7핀)"
+            } else if (cpTp=5) {
+              cpTp="DC차데모"
+            } else if (cpTp=6) {
+              cpTp="AC3상"
+            } else if (cptp=7) {
+              cpTp="DC콤보"
+            } else if (cpTp=8) {
+              cpTp="DC차데모+DC콤보"
+            }
+
+            var iwContent = '<div style=width:100%;padding:5px;>충전소주소:'+addr+
+                            '<br>충전소명칭:'+csNm+
+                            '<br>충전기상태:'+cpStat+
+                            '<br>충전기타입:'+chargeTp+
+                            '<br>충전방식:'+cpTp,
+                iwPosition = new kakao.maps.LatLng(stores[i]["lat"], stores[i]["longi"]);
+
+            var infowindow = new kakao.maps.InfoWindow({
+              position: iwPosition, 
+              content: iwContent
+            });
+
+            markers.push(marker);
+
+            kakao.maps.event.addListener(marker, "mouseover", makeOverListener(map, marker, infowindow));
+            kakao.maps.event.addListener(marker, "mouseout", makeOutListener(infowindow));
+          }
+
+          
+          clusterer.addMarkers(markers);
+        }});
             
     </script>
   </body>
