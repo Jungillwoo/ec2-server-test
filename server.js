@@ -1,8 +1,8 @@
 const express = require('express');
 const app = express();
 
-app.listen(8080, function(){
-    console.log('listening on 8080')
+app.listen(4000, function(){
+    console.log('listening on 4000')
 });
 
 // 서버 끄기 컨트롤 c
